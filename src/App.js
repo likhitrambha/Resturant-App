@@ -1,111 +1,127 @@
 import {Component} from 'react'
-import Header from './components/Header'
-import Tabs from './components/Tabs'
-import DishItem from './components/DishItem'
+import {BrowserRouter, Switch, Route} from 'react-router-dom'
+
+import Login from './components/Login'
+import Cart from './components/Cart'
+import Home from './components/Home'
+import ProtectedRoute from './components/ProtectedRoute'
+
+import CartContext from './context/CartContext'
+
 import './App.css'
 
 class App extends Component {
   state = {
-    menuList: [],
-    activeTab: '',
-    cartItems: {},
-    cartCount: 0,
-    restaurantName: '',
+    cartList: [],
   }
 
-  componentDidMount() {
-    this.getMenu()
-  }
-
-  getMenu = async () => {
-    try {
-      const response = await fetch(
-        'https://apis2.ccbp.in/restaurant-app/restaurant-menu-list-details',
+  addCartItem = dish => {
+    this.setState(prevState => {
+      const existingItem = prevState.cartList.find(
+        each => each.dish_id === dish.dish_id,
       )
-      const data = await response.json()
-      const restaurant = data[0]
 
-      this.setState({
-        menuList: restaurant.table_menu_list,
-        restaurantName: restaurant.restaurant_name,
-        activeTab: restaurant.table_menu_list?.[0]?.menu_category_id || '',
-      })
-    } catch (error) {
-      console.error(error)
-    }
-  }
+      if (existingItem) {
+        return {
+          cartList: prevState.cartList.map(each => {
+            if (each.dish_id === dish.dish_id) {
+              return {
+                ...each,
+                quantity: each.quantity + 1,
+              }
+            }
 
-  setActiveTab = id => {
-    this.setState({activeTab: id})
-  }
-
-  updateCount = (id, value) => {
-    this.setState(prev => {
-      const {cartItems} = prev
-      const current = cartItems[id] || 0
-
-      if (value === -1 && current === 0) {
-        return null
+            return each
+          }),
+        }
       }
-
-      const updated = current + value
-      const updatedCart = {...cartItems}
-
-      if (updated === 0) {
-        delete updatedCart[id]
-      } else {
-        updatedCart[id] = updated
-      }
-
-      const totalCount = Object.values(updatedCart).reduce(
-        (acc, item) => acc + item,
-        0,
-      )
 
       return {
-        cartItems: updatedCart,
-        cartCount: totalCount,
+        cartList: [...prevState.cartList, {...dish, quantity: 1}],
       }
     })
   }
 
+  removeCartItem = id => {
+    this.setState(prevState => ({
+      cartList: prevState.cartList.filter(each => each.dish_id !== id),
+    }))
+  }
+
+  incrementCartItemQuantity = id => {
+    this.setState(prevState => ({
+      cartList: prevState.cartList.map(each => {
+        if (each.dish_id === id) {
+          return {
+            ...each,
+            quantity: each.quantity + 1,
+          }
+        }
+
+        return each
+      }),
+    }))
+  }
+
+  decrementCartItemQuantity = id => {
+    this.setState(prevState => ({
+      cartList: prevState.cartList
+        .map(each => {
+          if (each.dish_id === id) {
+            return {
+              ...each,
+              quantity: each.quantity - 1,
+            }
+          }
+
+          return each
+        })
+        .filter(each => each.quantity > 0),
+    }))
+  }
+
+  removeAllCartItems = () => {
+    this.setState({cartList: []})
+  }
+
   getDishCount = id => {
-    const {cartItems} = this.state
-    return cartItems[id] || 0
+    const {cartList} = this.state
+
+    const item = cartList.find(each => each.dish_id === id)
+
+    return item ? item.quantity : 0
   }
 
   render() {
-    const {menuList, activeTab, cartCount, restaurantName} = this.state
-
-    if (menuList.length === 0) {
-      return <p>Loading...</p>
-    }
-
-    const activeCategory = menuList.find(
-      item => item.menu_category_id === activeTab,
-    )
+    const {cartList} = this.state
 
     return (
-      <div className="app">
-        <Header name={restaurantName} count={cartCount} />
+      <CartContext.Provider
+        value={{
+          cartList,
+          addCartItem: this.addCartItem,
+          removeCartItem: this.removeCartItem,
+          incrementCartItemQuantity: this.incrementCartItemQuantity,
+          decrementCartItemQuantity: this.decrementCartItemQuantity,
+          removeAllCartItems: this.removeAllCartItems,
+        }}
+      >
+        <BrowserRouter>
+          <Switch>
+            <Route exact path="/login" component={Login} />
 
-        <Tabs
-          tabs={menuList}
-          activeTab={activeTab}
-          setActiveTab={this.setActiveTab}
-        />
-
-        <div className="dishes">
-          {activeCategory?.category_dishes?.map(dish => (
-            <DishItem
-              key={dish.dish_id}
-              dish={dish}
-              count={this.getDishCount(dish.dish_id)}
-              updateCount={this.updateCount}
+            <ProtectedRoute
+              exact
+              path="/"
+              component={() => (
+                <Home cartList={cartList} getDishCount={this.getDishCount} />
+              )}
             />
-          ))}
-        </div>
-      </div>
+
+            <ProtectedRoute exact path="/cart" component={Cart} />
+          </Switch>
+        </BrowserRouter>
+      </CartContext.Provider>
     )
   }
 }

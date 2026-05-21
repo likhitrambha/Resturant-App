@@ -1,42 +1,100 @@
-const DishItem = ({dish, count, updateCount}) => (
-  <div className="dish-card">
-    <div className="dish-info">
-      <div className="dish-header">
-        <span className={dish.dish_Type === 1 ? 'veg' : 'nonveg'} />
-        <h3>{dish.dish_name}</h3>
-      </div>
+import {Component} from 'react'
 
-      <p className="desc">{dish.dish_description}</p>
+import CartContext from '../context/CartContext'
 
-      <p className="price">
-        {dish.dish_currency} {dish.dish_price}
-      </p>
+class DishItem extends Component {
+  state = {
+    quantity: 0,
+  }
 
-      <p className="cal">{dish.dish_calories} calories</p>
+  onIncrement = () => {
+    this.setState(prev => ({
+      quantity: prev.quantity + 1,
+    }))
+  }
 
-      {dish.addonCat?.length > 0 && (
-        <p className="addon">Customizations available</p>
-      )}
+  onDecrement = () => {
+    this.setState(prev => {
+      if (prev.quantity > 0) {
+        return {
+          quantity: prev.quantity - 1,
+        }
+      }
 
-      {dish.dish_Availability ? (
-        <div className="counter">
-          <button type="button" onClick={() => updateCount(dish.dish_id, -1)}>
-            -
-          </button>
+      return null
+    })
+  }
 
-          <p>{count}</p>
+  render() {
+    const {dish} = this.props
 
-          <button type="button" onClick={() => updateCount(dish.dish_id, 1)}>
-            +
-          </button>
-        </div>
-      ) : (
-        <p className="not-available">Not available</p>
-      )}
-    </div>
+    const {quantity} = this.state
 
-    <img src={dish.dish_image} alt={dish.dish_name} />
-  </div>
-)
+    return (
+      <CartContext.Consumer>
+        {value => {
+          const {addCartItem} = value
+
+          const onAddToCart = () => {
+            addCartItem({
+              ...dish,
+              quantity,
+            })
+          }
+
+          return (
+            <div className="dish-card">
+              <div className="dish-info">
+                <h1 className="dish-name">{dish.dish_name}</h1>
+
+                <p className="dish-price">
+                  {`${dish.dish_currency} ${dish.dish_price}`}
+                </p>
+
+                <p className="dish-description">{dish.dish_description}</p>
+
+                <p>{`${dish.dish_calories} calories`}</p>
+
+                {dish.dish_Availability ? (
+                  <>
+                    <div className="counter">
+                      <button type="button" onClick={this.onDecrement}>
+                        -
+                      </button>
+
+                      <p>{quantity}</p>
+
+                      <button type="button" onClick={this.onIncrement}>
+                        +
+                      </button>
+                    </div>
+
+                    {quantity > 0 && (
+                      <button
+                        type="button"
+                        className="add-cart-btn"
+                        onClick={onAddToCart}
+                      >
+                        ADD TO CART
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <p className="not-available">Not available</p>
+                )}
+
+                {dish.addonCat.length > 0 && (
+                  <p className="addon">Customizations available</p>
+                )}
+              </div>
+
+              <img src={dish.dish_image} alt={dish.dish_name} />
+            </div>
+          )
+        }}
+      </CartContext.Consumer>
+    )
+  }
+}
 
 export default DishItem
