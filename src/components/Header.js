@@ -18,11 +18,11 @@ const Header = props => {
       <div className="header-right">
         <p>My Orders</p>
 
-        <Link to="/cart">
-          <button type="button" data-testid="cart" className="cart-btn">
+        <Link to="/cart" data-testid="cart">
+          <div className="cart-btn">
             🛒
             <span className="cart-count">{count}</span>
-          </button>
+          </div>
         </Link>
 
         <button type="button" className="logout-btn" onClick={onLogout}>

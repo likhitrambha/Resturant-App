@@ -3,6 +3,7 @@ import {Component} from 'react'
 import Header from './Header'
 import Tabs from './Tabs'
 import DishItem from './DishItem'
+import CartContext from '../context/CartContext'
 
 class Home extends Component {
   state = {
@@ -38,8 +39,6 @@ class Home extends Component {
   render() {
     const {menuList, activeTab, restaurantName} = this.state
 
-    const {getDishCount, cartList} = this.props
-
     if (menuList.length === 0) {
       return <p>Loading...</p>
     }
@@ -49,25 +48,33 @@ class Home extends Component {
     )
 
     return (
-      <div className="app">
-        <Header name={restaurantName} count={cartList.length} />
+      <CartContext.Consumer>
+        {value => {
+          const {cartList, getDishCount} = value
 
-        <Tabs
-          tabs={menuList}
-          activeTab={activeTab}
-          setActiveTab={this.setActiveTab}
-        />
+          return (
+            <div className="app">
+              <Header name={restaurantName} count={cartList.length} />
 
-        <div className="dishes">
-          {activeCategory.category_dishes.map(dish => (
-            <DishItem
-              key={dish.dish_id}
-              dish={dish}
-              count={getDishCount(dish.dish_id)}
-            />
-          ))}
-        </div>
-      </div>
+              <Tabs
+                tabs={menuList}
+                activeTab={activeTab}
+                setActiveTab={this.setActiveTab}
+              />
+
+              <div className="dishes">
+                {activeCategory.category_dishes.map(dish => (
+                  <DishItem
+                    key={dish.dish_id}
+                    dish={dish}
+                    count={getDishCount(dish.dish_id)}
+                  />
+                ))}
+              </div>
+            </div>
+          )
+        }}
+      </CartContext.Consumer>
     )
   }
 }

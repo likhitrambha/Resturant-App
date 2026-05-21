@@ -99,6 +99,7 @@ class App extends Component {
       <CartContext.Provider
         value={{
           cartList,
+          getDishCount: this.getDishCount,
           addCartItem: this.addCartItem,
           removeCartItem: this.removeCartItem,
           incrementCartItemQuantity: this.incrementCartItemQuantity,
@@ -110,13 +111,7 @@ class App extends Component {
           <Switch>
             <Route exact path="/login" component={Login} />
 
-            <ProtectedRoute
-              exact
-              path="/"
-              component={() => (
-                <Home cartList={cartList} getDishCount={this.getDishCount} />
-              )}
-            />
+            <ProtectedRoute exact path="/" component={Home} />
 
             <ProtectedRoute exact path="/cart" component={Cart} />
           </Switch>

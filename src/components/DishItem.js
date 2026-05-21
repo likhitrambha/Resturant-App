@@ -48,7 +48,7 @@ class DishItem extends Component {
                 <h1 className="dish-name">{dish.dish_name}</h1>
 
                 <p className="dish-price">
-                  {`${dish.dish_currency} ${dish.dish_price}`}
+                  {dish.dish_currency} {dish.dish_price}
                 </p>
 
                 <p className="dish-description">{dish.dish_description}</p>
